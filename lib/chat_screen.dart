@@ -13,7 +13,7 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   late TextEditingController _controller;
   final List<Message> _messages = [];
-  final String username = generateRandomUsername();
+  String username = generateRandomUsername();
 
   @override
   void initState() {
@@ -38,6 +38,12 @@ class _ChatScreenState extends State<ChatScreen> {
     return _messages.where((msg) => msg.receiver == null).toList();
   }
 
+  void _regenerateUsername() {
+    setState(() {
+      username = generateRandomUsername();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -60,6 +66,12 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.warning, color: Colors.red),
+            onPressed: _regenerateUsername,
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -84,15 +96,25 @@ class _ChatScreenState extends State<ChatScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment:
+                          isMe
+                              ? CrossAxisAlignment.end
+                              : CrossAxisAlignment.start,
                       children: [
                         if (!isMe)
-                          Text(
-                            message.sender,
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 4.0),
+                            child: Text(
+                              message.sender,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         Text(
-                          "${message.sender}: ${message.content}",
+                          message.content,
                           style: TextStyle(
                             color: isMe ? Colors.black : Colors.white,
                           ),
@@ -130,15 +152,6 @@ class _ChatScreenState extends State<ChatScreen> {
                 IconButton(
                   icon: Icon(Icons.send, color: Colors.greenAccent),
                   onPressed: () => _sendMessage(_controller.text),
-                ),
-                IconButton(
-                  icon: Icon(Icons.warning, color: Colors.red),
-                  onPressed: () async {
-                    await StorageService.clearAll();
-                    setState(() {
-                      _messages.clear();
-                    });
-                  },
                 ),
               ],
             ),

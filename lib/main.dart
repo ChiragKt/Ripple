@@ -5,8 +5,13 @@ import 'services/storage_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Hive
   await Hive.initFlutter();
-  await StorageService.init(); // Hive setup moved to service
+
+  // Initialize StorageService (opens messages box)
+  await StorageService.init();
+
   runApp(const Ripple());
 }
 
