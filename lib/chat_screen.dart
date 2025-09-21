@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
-import 'package:hive/hive.dart';
+import 'models/message.dart';
+import 'services/storage_service.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -11,7 +12,6 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   late TextEditingController _controller;
-  late Box _box;
   final List<Message> _messages = [];
   final String username = generateRandomUsername();
 
@@ -19,25 +19,23 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     _controller = TextEditingController();
-    _box = Hive.box('messages');
-
-    for (var msg in _box.values) {
-      _messages.add(Message(sender: msg['sender'], content: msg['content']));
-    }
+    _messages.addAll(StorageService.getMessages());
   }
 
-  void _sendMessage(String text) {
+  void _sendMessage(String text) async {
     if (text.trim().isEmpty) return;
 
     final msg = Message(sender: username, content: text);
-
     setState(() {
       _messages.add(msg);
     });
 
-    _box.add({'sender': msg.sender, 'content': msg.content});
-
     _controller.clear();
+    await StorageService.addMessage(msg);
+  }
+
+  List<Message> get chatPoolMessages {
+    return _messages.where((msg) => msg.receiver == null).toList();
   }
 
   @override
@@ -58,11 +56,7 @@ class _ChatScreenState extends State<ChatScreen> {
             SizedBox(width: 12),
             Text(
               username,
-              style: TextStyle(
-                color: Colors.greenAccent,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
+              style: TextStyle(color: Colors.greenAccent, fontSize: 18),
             ),
           ],
         ),
@@ -73,9 +67,10 @@ class _ChatScreenState extends State<ChatScreen> {
             child: ListView.builder(
               reverse: true,
               padding: EdgeInsets.all(12),
-              itemCount: _messages.length,
+              itemCount: chatPoolMessages.length,
               itemBuilder: (context, index) {
-                final message = _messages[_messages.length - 1 - index];
+                final message =
+                    chatPoolMessages[chatPoolMessages.length - 1 - index];
                 final isMe = message.sender == username;
 
                 return Align(
@@ -91,16 +86,13 @@ class _ChatScreenState extends State<ChatScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          message.sender,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[300],
-                            fontWeight: FontWeight.bold,
+                        if (!isMe)
+                          Text(
+                            message.sender,
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
                           ),
-                        ),
                         Text(
-                          message.content,
+                          "${message.sender}: ${message.content}",
                           style: TextStyle(
                             color: isMe ? Colors.black : Colors.white,
                           ),
@@ -121,11 +113,6 @@ class _ChatScreenState extends State<ChatScreen> {
                     controller: _controller,
                     style: TextStyle(color: Colors.white),
                     decoration: InputDecoration(
-                      prefixText: "$username: ",
-                      prefixStyle: TextStyle(
-                        color: Colors.greenAccent,
-                        fontWeight: FontWeight.bold,
-                      ),
                       hintText: "Type a message...",
                       hintStyle: TextStyle(color: Colors.grey),
                       filled: true,
@@ -144,6 +131,15 @@ class _ChatScreenState extends State<ChatScreen> {
                   icon: Icon(Icons.send, color: Colors.greenAccent),
                   onPressed: () => _sendMessage(_controller.text),
                 ),
+                IconButton(
+                  icon: Icon(Icons.warning, color: Colors.red),
+                  onPressed: () async {
+                    await StorageService.clearAll();
+                    setState(() {
+                      _messages.clear();
+                    });
+                  },
+                ),
               ],
             ),
           ),
@@ -153,14 +149,8 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 }
 
-class Message {
-  final String sender;
-  final String content;
-  Message({required this.sender, required this.content});
-}
-
 String generateRandomUsername() {
   final random = Random();
   int number = random.nextInt(9000) + 1000;
-  return "@rippler$number";
+  return "@ripple$number";
 }
