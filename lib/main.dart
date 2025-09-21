@@ -11,17 +11,69 @@ class Ripple extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.black),
+        scaffoldBackgroundColor: Colors.black, // full black background
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
       ),
       home: Scaffold(
         appBar: AppBar(
-          title: Text("Ripple"),
-          titleTextStyle: TextStyle(color: Colors.green),
-        ),
-        body: Center(child: Column(children: [
-                
+          backgroundColor: Colors.black,
+          centerTitle: true,
+          title: Text(
+            "🌊 Ripple",
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: Colors.greenAccent,
+              letterSpacing: 2,
+              shadows: [
+                Shadow(
+                  blurRadius: 4,
+                  color: Colors.greenAccent,
+                  offset: Offset(2, 2),
+                ),
               ],
-            )),
+            ),
+          ),
+        ),
+        body: Stack(
+          children: [
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "Welcome to Ripple!",
+                    style: TextStyle(color: Colors.white, fontSize: 24),
+                  ),
+                ],
+              ),
+            ),
+
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: TextField(
+                  style: TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: "Type something...",
+                    hintStyle: TextStyle(color: Colors.grey),
+                    filled: true,
+                    fillColor: Colors.grey[900],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
