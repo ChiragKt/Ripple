@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'package:hive/hive.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -10,21 +11,31 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   late TextEditingController _controller;
+  late Box _box;
   final List<Message> _messages = [];
   final String username = generateRandomUsername();
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: username);
+    _controller = TextEditingController();
+    _box = Hive.box('messages');
+
+    for (var msg in _box.values) {
+      _messages.add(Message(sender: msg['sender'], content: msg['content']));
+    }
   }
 
   void _sendMessage(String text) {
     if (text.trim().isEmpty) return;
 
+    final msg = Message(sender: username, content: text);
+
     setState(() {
-      _messages.add(Message(sender: username, content: text));
+      _messages.add(msg);
     });
+
+    _box.add({'sender': msg.sender, 'content': msg.content});
 
     _controller.clear();
   }
@@ -34,20 +45,24 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.black,
-        centerTitle: true,
-        title: Column(
+        title: Row(
           children: [
             Text(
-              "Ripple Chat",
+              "Ripple",
               style: TextStyle(
-                color: Color(0xFF00FF55), // richer green
+                color: Color(0xFF00FF55),
                 fontWeight: FontWeight.w900,
                 fontSize: 36,
               ),
             ),
+            SizedBox(width: 12),
             Text(
-              "Logged in as $username",
-              style: TextStyle(color: Colors.grey, fontSize: 12),
+              username,
+              style: TextStyle(
+                color: Colors.greenAccent,
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
             ),
           ],
         ),
@@ -76,11 +91,14 @@ class _ChatScreenState extends State<ChatScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (!isMe)
-                          Text(
-                            message.sender,
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                        Text(
+                          message.sender,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[300],
+                            fontWeight: FontWeight.bold,
                           ),
+                        ),
                         Text(
                           message.content,
                           style: TextStyle(
@@ -103,6 +121,11 @@ class _ChatScreenState extends State<ChatScreen> {
                     controller: _controller,
                     style: TextStyle(color: Colors.white),
                     decoration: InputDecoration(
+                      prefixText: "$username: ",
+                      prefixStyle: TextStyle(
+                        color: Colors.greenAccent,
+                        fontWeight: FontWeight.bold,
+                      ),
                       hintText: "Type a message...",
                       hintStyle: TextStyle(color: Colors.grey),
                       filled: true,
@@ -139,5 +162,5 @@ class Message {
 String generateRandomUsername() {
   final random = Random();
   int number = random.nextInt(9000) + 1000;
-  return "@ripple$number";
+  return "@rippler$number";
 }
